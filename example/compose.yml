@@ -1,0 +1,8 @@
+services:
+  whoami:
+    image: containerpi/whoami
+    labels:
+      - "traefik.http.routers.whoami.rule=Host({% for host in hosts -%}
+          `whoami.{{ host }}`
+          {%- if not loop.last %}, {% endif -%}
+        {%- endfor %})"
