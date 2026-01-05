@@ -1,4 +1,11 @@
-# composable
+<h1 align="center">composable</h1>
+
+<p align="center">
+  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/cfstcyr/composable">
+  <img alt="GitHub last commit (branch)" src="https://img.shields.io/github/last-commit/cfstcyr/composable/main">
+</p>
+
+![Composable Banner](./docs/assets/banner.jpeg)
 
 Programmatically generate Docker Compose files using Python and Jinja2 templates.
 
