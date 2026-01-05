@@ -20,15 +20,13 @@ class AppSettings(BaseSettings):
     )
 
     default_src_dir: Path = Field(
-        default=Path("./src"),
+        default=Path("./compose"),
         validation_alias=AliasChoices("default-src-dir", "src-dir"),
     )
     default_src_patterns: list[str] = Field(
         default=[
-            "docker-compose*.y*ml",
-            "compose*.y*ml",
-            "docker-compose**/*.y*ml",
-            "compose**/*.y*ml",
+            "[!_]*.*",
+            "[!_]**/[!_]*.*",
         ],
         validation_alias=AliasChoices("default-src-patterns", "src-patterns"),
     )

@@ -1,4 +1,3 @@
-src-dir: example
 data:
   hosts:
     - localhost
