@@ -11,20 +11,30 @@ import yaml
 from omegaconf import OmegaConf
 from rich.console import Console
 
-from py_docker_compose.app_settings import get_app_settings
+from py_docker_compose.app_config import load_app_config
 from py_docker_compose.app_state import AppState
 from py_docker_compose.libs.functions.load_compose import load_compose
 
 app = typer.Typer(
     no_args_is_help=True,
 )
-app_settings = get_app_settings()
 console = Console(stderr=True)
 
 
 @app.callback()
 def main(
     ctx: typer.Context,
+    config_paths: list[Path] = typer.Option(
+        [
+            Path("./pydc.yaml"),
+            Path("./pydc.yml"),
+            Path("./py-docker-compose.yaml"),
+            Path("./py-docker-compose.yml"),
+        ],
+        "--config",
+        "-c",
+        help="Path to the application configuration file.",
+    ),
     src_dir: Path | None = typer.Option(
         None,
         help="Source directory to find source docker-compose files.",
@@ -46,6 +56,8 @@ def main(
         help="Source version spec mapping to select source docker-compose files. Format: key:specifier",
     ),
 ):
+    app_config = load_app_config(tuple(config_paths))
+    print(app_config)
     src_args = {
         "dir": src_dir,
         "glob": src_glob,
@@ -54,7 +66,10 @@ def main(
         "version_spec_mapping": src_version_spec_mapping,
     }
     ctx.obj = AppState(
-        src=app_settings.default_src.model_copy(update={k: v for k, v in src_args.items() if v is not None})
+        src=app_config.src.model_copy(
+            update={k: v for k, v in src_args.items() if v is not None}
+        ),
+        app_config=app_config,
     )
 
 
@@ -83,7 +98,7 @@ def compose(
     resolved_data = cast(
         dict[str, Any],
         OmegaConf.to_container(
-            OmegaConf.merge(app_settings.default_data, OmegaConf.from_dotlist(data)),
+            OmegaConf.merge(app_state.app_config.data, OmegaConf.from_dotlist(data)),
             resolve=True,
         ),
     )
@@ -140,7 +155,7 @@ def output(
     resolved_data = cast(
         dict[str, Any],
         OmegaConf.to_container(
-            OmegaConf.merge(app_settings.default_data, OmegaConf.from_dotlist(data)),
+            OmegaConf.merge(app_state.app_config.data, OmegaConf.from_dotlist(data)),
             resolve=True,
         ),
     )
