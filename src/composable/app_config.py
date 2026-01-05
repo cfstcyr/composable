@@ -12,7 +12,8 @@ from pydantic_settings import (
     YamlConfigSettingsSource,
 )
 
-from composable.libs.schemas.src import Src
+from composable.libs.schemas.src import Src, SrcGlob
+from composable.libs.schemas.versions_spec import Versions
 
 
 class AppConfig(BaseSettings):
@@ -23,14 +24,17 @@ class AppConfig(BaseSettings):
     )
 
     src: Src = Field(
-        default=Src(
+        default=SrcGlob(
             dir=Path("./compose"),
-            glob="**/*.*",
-            exclude_patterns=[r"\/_"],
-            version_spec=SpecifierSet(">=0"),
-            version_spec_mapping={},
         ),
         validation_alias=AliasChoices("src", "source"),
+    )
+    versions: Versions = Field(
+        default=Versions(
+            spec=SpecifierSet(">=0"),
+            spec_mapping={},
+        ),
+        validation_alias=AliasChoices("versions", "versions_spec"),
     )
     data: dict[str, Any] = Field(
         default={},

@@ -1,69 +1,77 @@
+import re
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Annotated, Any
 
-from packaging.specifiers import SpecifierSet
 from pydantic import (
     BaseModel,
-    BeforeValidator,
-    GetCoreSchemaHandler,
-    GetJsonSchemaHandler,
-    PlainSerializer,
-    WithJsonSchema,
+    Field,
+    RootModel,
 )
-from pydantic.json_schema import JsonSchemaValue
-from pydantic_core import CoreSchema, core_schema
-
-PydanticSpecifierSet = Annotated[
-    SpecifierSet,
-    BeforeValidator(lambda v: v if isinstance(v, SpecifierSet) else SpecifierSet(v)),
-    PlainSerializer(str, return_type=str),
-    WithJsonSchema(
-        {
-            "type": "string",
-            "title": "Version Specifier",
-            "examples": [">=1.0.0,<2.0.0", "==1.5.0", "~=1.4.2"],
-            "description": "A packaging.specifiers.SpecifierSet string",
-        }
-    ),
-]
 
 
-class SpecifierSetValidator:
-    def __get_pydantic_core_schema__(  # noqa: PLW3201
-        self,
-        source_type: Any,
-        handler: GetCoreSchemaHandler,
-    ) -> CoreSchema:
-        def specifier_set_validator(v: str | SpecifierSet) -> SpecifierSet:
-            if isinstance(v, SpecifierSet):
-                return v
-            return SpecifierSet(v)
+class BaseSrc(ABC):
+    @abstractmethod
+    def list_files(self) -> Sequence[Path]: ...
 
-        from_src_schema = core_schema.chain_schema(
-            [
-                core_schema.str_schema(),
-                core_schema.no_info_plain_validator_function(specifier_set_validator),
-            ]
-        )
-
-        return core_schema.json_or_python_schema(
-            json_schema=from_src_schema,
-            python_schema=core_schema.union_schema(
-                [core_schema.is_instance_schema(SpecifierSet), from_src_schema]
-            ),
-            serialization=core_schema.plain_serializer_function_ser_schema(str),
-        )
-
-    @classmethod
-    def __get_pydantic_json_schema__(  # noqa: PLW3201
-        cls, _core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
-    ) -> JsonSchemaValue:
-        return handler(core_schema.str_schema())
+    @abstractmethod
+    def get_dir(self) -> Path: ...
 
 
-class Src(BaseModel):
-    dir: Path
-    glob: str
-    exclude_patterns: list[str]
-    version_spec: Annotated[SpecifierSet, SpecifierSetValidator()]
-    version_spec_mapping: dict[str, Annotated[SpecifierSet, SpecifierSetValidator()]]
+class SrcGlob(BaseSrc, BaseModel):
+    dir: Path = Field(
+        description="Base directory to search for files. If not specified, the current working directory is used.",
+    )
+    glob: str = Field(
+        default="**/*.*",
+        examples=["**/*.*", "*.yaml", "configs/**/*.yml"],
+        description="Glob pattern to match files within the specified directory.",
+    )
+    exclude_patterns: list[str] = Field(
+        default_factory=lambda: [r"\/_"],
+        examples=[r"\/_"],
+        description="List of regex patterns to exclude from the results.",
+    )
+
+    def list_files(self) -> list[Path]:
+        files = list(self.dir.glob(self.glob))
+
+        for pattern in self.exclude_patterns:
+            files = [f for f in files if not re.search(pattern, str(f))]
+
+        return files
+
+    def get_dir(self) -> Path:
+        return self.dir
+
+
+class SrcFileRoot(BaseSrc, RootModel[Path]):
+    def list_files(self) -> list[Path]:
+        return [self.root]
+
+    def get_dir(self) -> Path:
+        return self.root.parent
+
+
+class SrcFile(BaseSrc, BaseModel):
+    file: Path
+
+    def list_files(self) -> list[Path]:
+        return [self.file]
+
+    def get_dir(self) -> Path:
+        return self.file.parent
+
+
+ScalarSrc = SrcGlob | SrcFile | SrcFileRoot
+
+
+class SrcList(BaseSrc, RootModel[Sequence[ScalarSrc]]):
+    def list_files(self) -> list[Path]:
+        return [file for source in self.root for file in source.list_files()]
+
+    def get_dir(self) -> Path:
+        return Path.cwd()
+
+
+Src = ScalarSrc | SrcList

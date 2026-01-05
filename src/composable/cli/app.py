@@ -36,40 +36,9 @@ def main(
         "-c",
         help="Path to the application configuration file.",
     ),
-    src_dir: Path | None = typer.Option(
-        None,
-        help="Source directory to find source docker-compose files.",
-    ),
-    src_glob: str | None = typer.Option(
-        None,
-        help="Source glob to find source docker-compose files.",
-    ),
-    src_exclude_patterns: list[str] | None = typer.Option(
-        None,
-        help="Source exclude patterns to ignore source docker-compose files.",
-    ),
-    src_version_spec: str | None = typer.Option(
-        None,
-        help="Source version spec to select source docker-compose files.",
-    ),
-    src_version_spec_mapping: list[str] | None = typer.Option(
-        None,
-        help="Source version spec mapping to select source docker-compose files. Format: key:specifier",
-    ),
 ):
-    app_config = load_app_config(tuple(config_paths))
-    src_args = {
-        "dir": src_dir,
-        "glob": src_glob,
-        "exclude_patterns": src_exclude_patterns,
-        "version_spec": src_version_spec,
-        "version_spec_mapping": src_version_spec_mapping,
-    }
     ctx.obj = AppState(
-        src=app_config.src.model_copy(
-            update={k: v for k, v in src_args.items() if v is not None}
-        ),
-        app_config=app_config,
+        app_config=load_app_config(tuple(config_paths)),
     )
 
 
@@ -103,7 +72,8 @@ def compose(
         data_files=app_state.app_config.data_files,
     )
     compose = load_compose(
-        src=app_state.src,
+        src=app_state.app_config.src,
+        versions_spec=app_state.app_config.versions,
         data=loaded_data,
     )
 
@@ -160,7 +130,8 @@ def output(
         data_files=app_state.app_config.data_files,
     )
     compose = load_compose(
-        src=app_state.src,
+        src=app_state.app_config.src,
+        versions_spec=app_state.app_config.versions,
         data=loaded_data,
     )
 

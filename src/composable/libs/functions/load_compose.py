@@ -2,7 +2,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from omegaconf import OmegaConf
 from packaging.version import Version
 
@@ -14,22 +13,24 @@ from composable.libs.classes.provider import (
 )
 from composable.libs.schemas.docker_compose import DockerComposeModel
 from composable.libs.schemas.src import Src
+from composable.libs.schemas.versions_spec import Versions
 
 
 def _collect_files(
     src: Src,
+    versions_spec: Versions | None = None,
     *,
     file_name_pattern: str = r"^(?P<name>.+?)(?:[._:@]+v(?P<version>[0-9]+(?:\.[0-9]+)*(?:[\w_-]+)?))?$",
 ) -> list[Path]:
-    files = src.dir.glob(src.glob)
-
-    for pattern in src.exclude_patterns:
-        files = [f for f in files if not re.search(pattern, str(f))]
-
+    files = [file for file in src.list_files()]
     files_index: dict[str, tuple[Version | None, Path]] = {}
 
     for file in files:
-        file_path = file.relative_to(src.dir)
+        file_path = (
+            file.relative_to(Path.cwd())
+            if file.is_relative_to(Path.cwd())
+            else file.absolute()
+        )
         if file_path.suffix == ".jinja":
             file_path = Path(str(file_path.with_suffix("")))
 
@@ -37,34 +38,36 @@ def _collect_files(
         match = re.match(file_name_pattern, file_name)
 
         if match is None:
-            key = file_name
-            version = None
+            match_key = file_name
+            match_version = None
         else:
-            key = match.group("name")
-            version = Version(match.group("version") or "0")
+            match_key = match.group("name")
+            match_version = Version(match.group("version") or "0")
 
-        if version:
-            if not src.version_spec.contains(version):
+        if versions_spec and match_version:
+            if not versions_spec.spec.contains(match_version):
                 continue
-            if key in src.version_spec_mapping and not src.version_spec_mapping[
-                key
-            ].contains(version):
-                continue
-
-        if key not in files_index:
-            files_index[key] = (version, file)
-        else:
-            existing_version, _ = files_index[key]
-            if version is not None and (
-                existing_version is None or version > existing_version
+            if (
+                match_key in versions_spec.spec_mapping
+                and not versions_spec.spec_mapping[match_key].contains(match_version)
             ):
-                files_index[key] = (version, file)
+                continue
+
+        if match_key not in files_index:
+            files_index[match_key] = (match_version, file)
+        else:
+            existing_version, _ = files_index[match_key]
+            if match_version is not None and (
+                existing_version is None or match_version > existing_version
+            ):
+                files_index[match_key] = (match_version, file)
 
     return sorted(file for _, file in files_index.values())
 
 
 def load_compose(
     src: Src,
+    versions_spec: Versions | None = None,
     *,
     data: dict[str, Any] = {},
     providers: list[Provider] = [
@@ -73,18 +76,17 @@ def load_compose(
     ],
     invalid_file_format_ok: bool = False,
 ) -> DockerComposeModel:
-    env = Environment(
-        loader=FileSystemLoader(src.dir), undefined=StrictUndefined, autoescape=True
-    )
+    files = _collect_files(src, versions_spec)
+    provider_context = ProviderContext(src=src, data=data)
+
     conf = OmegaConf.create()
-    files = _collect_files(src)
-    provider_context = ProviderContext(src=src, jinja_env=env, data=data)
 
     for file in files:
         for provider in providers:
             if provider.file_match(file):
-                content = provider.load(file, context=provider_context)
-                conf = OmegaConf.merge(conf, content)
+                conf = OmegaConf.merge(
+                    conf, provider.load(file, context=provider_context)
+                )
                 break
         else:
             if not invalid_file_format_ok:

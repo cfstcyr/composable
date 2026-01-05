@@ -4,10 +4,11 @@ import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from functools import cache
 from pathlib import Path
 from typing import Any, ClassVar, ReadOnly, cast
 
-from jinja2 import Environment
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from omegaconf import DictConfig, OmegaConf
 from pydantic import BaseModel, TypeAdapter
 
@@ -17,7 +18,6 @@ from composable.libs.schemas.src import Src
 @dataclass(kw_only=True)
 class ProviderContext:
     src: Src
-    jinja_env: Environment
     data: dict[str, Any]
 
 
@@ -48,15 +48,17 @@ class YamlFileProvider(Provider):
     )
 
     def load(self, path: Path, context: ProviderContext) -> dict[str, Any] | DictConfig:
-        print(
-            context.jinja_env.get_template(
-                str(path.relative_to(context.src.dir))
-            ).render(**context.data)
-        )
         return self.parse_fn(
-            context.jinja_env.get_template(
-                str(path.relative_to(context.src.dir))
-            ).render(**context.data)
+            self._get_jinja_env(path).get_template(path.name).render(**context.data)
+        )
+
+    @classmethod
+    @cache
+    def _get_jinja_env(cls, path: Path) -> Environment:
+        return Environment(
+            loader=FileSystemLoader(path.parent.absolute()),
+            undefined=StrictUndefined,
+            autoescape=True,
         )
 
 
@@ -66,7 +68,7 @@ class PythonFileProvider(Provider):
     symbols: list[str] = field(default_factory=lambda: ["compose", "COMPOSE"])
 
     def load(self, path: Path, context: ProviderContext) -> dict[str, Any] | DictConfig:
-        sys.path.insert(0, str(context.src.dir))
+        sys.path.insert(0, str(Path.cwd().absolute()))
 
         try:
             spec = importlib.util.spec_from_file_location(name="module", location=path)
