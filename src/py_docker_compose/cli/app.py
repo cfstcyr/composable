@@ -57,7 +57,6 @@ def main(
     ),
 ):
     app_config = load_app_config(tuple(config_paths))
-    print(app_config)
     src_args = {
         "dir": src_dir,
         "glob": src_glob,
