@@ -1,0 +1,7 @@
+                - "traefik.enable=true"
+- "traefik.http.routers.{{ service }}.rule=Host(
+    {%- for host in hosts -%}
+    `{{ host }}`
+        {%- if not loop.last %}, {% endif -%}
+    {%- endfor -%}
+    )"

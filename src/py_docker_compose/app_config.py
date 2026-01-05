@@ -36,6 +36,22 @@ class AppConfig(BaseSettings):
         default={},
         validation_alias=AliasChoices("data", "globals", "values"),
     )
+    data_files: list[Path] = Field(
+        default=[
+            Path("globals.yaml"),
+            Path("globals.yml"),
+            Path("values.yaml"),
+            Path("values.yml"),
+        ],
+        validation_alias=AliasChoices(
+            "data_files",
+            "globals_files",
+            "values_files",
+            "data-files",
+            "globals-files",
+            "values-files",
+        ),
+    )
 
 
 @lru_cache(maxsize=1)

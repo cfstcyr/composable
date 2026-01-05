@@ -1,3 +1,2 @@
-globals:
-  hosts:
-    - localhost
+src:
+  dir: examples/compose

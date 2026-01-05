@@ -27,7 +27,7 @@ class Provider(ABC):
 
     @classmethod
     def file_match(cls, path: Path) -> bool:
-        return any(path.suffix == ext for ext in cls.extensions)
+        return any(str(path).endswith(ext) for ext in cls.extensions)
 
     @abstractmethod
     def load(
@@ -37,12 +37,22 @@ class Provider(ABC):
 
 @dataclass
 class YamlFileProvider(Provider):
-    extensions: ClassVar[ReadOnly[list[str]]] = [".yaml", ".yml"]
+    extensions: ClassVar[ReadOnly[list[str]]] = [
+        ".yaml",
+        ".yml",
+        ".yaml.jinja",
+        ".yml.jinja",
+    ]
     parse_fn: Callable[[str], dict[str, Any] | DictConfig] = field(
         default=lambda content: cast(DictConfig, OmegaConf.create(content))
     )
 
     def load(self, path: Path, context: ProviderContext) -> dict[str, Any] | DictConfig:
+        print(
+            context.jinja_env.get_template(
+                str(path.relative_to(context.src.dir))
+            ).render(**context.data)
+        )
         return self.parse_fn(
             context.jinja_env.get_template(
                 str(path.relative_to(context.src.dir))

@@ -1,0 +1,9 @@
+services:
+  whoami:
+    image: containerpi/whoami
+    labels:
+      {% filter trim | indent(6) %}
+        {% with service="whoami" -%}
+          {% include('_traefik-labels.yml.jinja') %}
+        {%- endwith %}
+      {% endfilter %}

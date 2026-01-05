@@ -14,6 +14,7 @@ from rich.console import Console
 from py_docker_compose.app_config import load_app_config
 from py_docker_compose.app_state import AppState
 from py_docker_compose.libs.functions.load_compose import load_compose
+from py_docker_compose.libs.functions.load_data import load_data
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -94,16 +95,16 @@ def compose(
 ):
     app_state: AppState = ctx.obj
 
-    resolved_data = cast(
-        dict[str, Any],
-        OmegaConf.to_container(
-            OmegaConf.merge(app_state.app_config.data, OmegaConf.from_dotlist(data)),
-            resolve=True,
-        ),
+    loaded_data = load_data(
+        data=[
+            app_state.app_config.data,
+            cast(dict[str, Any], dict(OmegaConf.from_dotlist(data))),
+        ],
+        data_files=app_state.app_config.data_files,
     )
     compose = load_compose(
         src=app_state.src,
-        data=resolved_data,
+        data=loaded_data,
     )
 
     with NamedTemporaryFile(
@@ -151,16 +152,16 @@ def output(
 ):
     app_state: AppState = ctx.obj
 
-    resolved_data = cast(
-        dict[str, Any],
-        OmegaConf.to_container(
-            OmegaConf.merge(app_state.app_config.data, OmegaConf.from_dotlist(data)),
-            resolve=True,
-        ),
+    loaded_data = load_data(
+        data=[
+            app_state.app_config.data,
+            cast(dict[str, Any], OmegaConf.to_container(OmegaConf.from_dotlist(data))),
+        ],
+        data_files=app_state.app_config.data_files,
     )
     compose = load_compose(
         src=app_state.src,
-        data=resolved_data,
+        data=loaded_data,
     )
 
     console.print("[bold green]Generated Docker Compose YAML:[/]")

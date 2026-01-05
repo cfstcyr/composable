@@ -29,7 +29,11 @@ def _collect_files(
     files_index: dict[str, tuple[Version | None, Path]] = {}
 
     for file in files:
-        file_name = str(file.relative_to(src.dir).with_suffix(""))
+        file_path = file.relative_to(src.dir)
+        if file_path.suffix == ".jinja":
+            file_path = Path(str(file_path.with_suffix("")))
+
+        file_name = str(file_path.with_suffix(""))
         match = re.match(file_name_pattern, file_name)
 
         if match is None:
