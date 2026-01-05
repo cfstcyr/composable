@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from pathlib import Path
+
+from py_docker_compose.libs.schemas.src import Src
 
 
 @dataclass
 class AppState:
-    src_dir: Path
-    src_patterns: list[str]
+    src: Src

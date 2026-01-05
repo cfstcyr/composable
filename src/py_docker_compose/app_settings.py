@@ -2,6 +2,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+from packaging.specifiers import SpecifierSet
 from pydantic import AliasChoices, Field
 from pydantic_settings import (
     BaseSettings,
@@ -10,6 +11,8 @@ from pydantic_settings import (
     YamlConfigSettingsSource,
 )
 
+from py_docker_compose.libs.schemas.src import Src
+
 
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -17,18 +20,18 @@ class AppSettings(BaseSettings):
         env_file_encoding="utf-8",
         yaml_file="pycd.yaml",
         yaml_file_encoding="utf-8",
+        nested_model_default_partial_update=True,
     )
 
-    default_src_dir: Path = Field(
-        default=Path("./compose"),
-        validation_alias=AliasChoices("default-src-dir", "src-dir"),
-    )
-    default_src_patterns: list[str] = Field(
-        default=[
-            "[!_]*.*",
-            "[!_]**/[!_]*.*",
-        ],
-        validation_alias=AliasChoices("default-src-patterns", "src-patterns"),
+    default_src: Src = Field(
+        default=Src(
+            dir=Path("./compose"),
+            glob="**/*.*",
+            exclude_patterns=[r"\/_"],
+            version_spec=SpecifierSet(">=0"),
+            version_spec_mapping={},
+        ),
+        validation_alias=AliasChoices("default-src", "src"),
     )
     default_data: dict[str, Any] = Field(
         default={},

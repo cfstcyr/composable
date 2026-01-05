@@ -11,11 +11,14 @@ from jinja2 import Environment
 from omegaconf import DictConfig, OmegaConf
 from pydantic import BaseModel, TypeAdapter
 
+from py_docker_compose.libs.schemas.src import Src
+
 
 @dataclass(kw_only=True)
 class ProviderContext:
-    src_dir: Path
+    src: Src
     jinja_env: Environment
+    data: dict[str, Any]
 
 
 @dataclass(kw_only=True)
@@ -28,7 +31,7 @@ class Provider(ABC):
 
     @abstractmethod
     def load(
-        self, path: Path, data: dict[str, Any], context: ProviderContext
+        self, path: Path, context: ProviderContext
     ) -> dict[str, Any] | DictConfig: ...
 
 
@@ -39,13 +42,11 @@ class YamlFileProvider(Provider):
         default=lambda content: cast(DictConfig, OmegaConf.create(content))
     )
 
-    def load(
-        self, path: Path, data: dict[str, Any], context: ProviderContext
-    ) -> dict[str, Any] | DictConfig:
+    def load(self, path: Path, context: ProviderContext) -> dict[str, Any] | DictConfig:
         return self.parse_fn(
             context.jinja_env.get_template(
-                str(path.relative_to(context.src_dir))
-            ).render(**data)
+                str(path.relative_to(context.src.dir))
+            ).render(**context.data)
         )
 
 
@@ -54,10 +55,8 @@ class PythonFileProvider(Provider):
     extensions: ClassVar[ReadOnly[list[str]]] = [".py"]
     symbols: list[str] = field(default_factory=lambda: ["compose", "COMPOSE"])
 
-    def load(
-        self, path: Path, data: dict[str, Any], context: ProviderContext
-    ) -> dict[str, Any] | DictConfig:
-        sys.path.insert(0, str(context.src_dir))
+    def load(self, path: Path, context: ProviderContext) -> dict[str, Any] | DictConfig:
+        sys.path.insert(0, str(context.src.dir))
 
         try:
             spec = importlib.util.spec_from_file_location(name="module", location=path)
@@ -81,9 +80,9 @@ class PythonFileProvider(Provider):
                     sig = inspect.signature(compose)
                     for name, param in sig.parameters.items():
                         if name == "data":
-                            value = data
-                        elif name in data:
-                            value = data[name]
+                            value = context.data
+                        elif name in context.data:
+                            value = context.data[name]
                         else:
                             continue
 
