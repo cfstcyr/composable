@@ -19,7 +19,7 @@ from composable.libs.schemas.src import Src
 def _collect_files(
     src: Src,
     *,
-    file_name_pattern: str = r"^(?P<name>.+?)(?:[._:]+v(?P<version>[0-9]+(?:\.[0-9]+)*(?:[\w_-]+)?))?$",
+    file_name_pattern: str = r"^(?P<name>.+?)(?:[._:@]+v(?P<version>[0-9]+(?:\.[0-9]+)*(?:[\w_-]+)?))?$",
 ) -> list[Path]:
     files = src.dir.glob(src.glob)
 
