@@ -6,14 +6,14 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from omegaconf import OmegaConf
 from packaging.version import Version
 
-from py_docker_compose.libs.classes.provider import (
+from composable.libs.classes.provider import (
     Provider,
     ProviderContext,
     PythonFileProvider,
     YamlFileProvider,
 )
-from py_docker_compose.libs.schemas.docker_compose import DockerComposeModel
-from py_docker_compose.libs.schemas.src import Src
+from composable.libs.schemas.docker_compose import DockerComposeModel
+from composable.libs.schemas.src import Src
 
 
 def _collect_files(

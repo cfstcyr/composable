@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from py_docker_compose.app_config import AppConfig
-from py_docker_compose.libs.schemas.src import Src
+from composable.app_config import AppConfig
+from composable.libs.schemas.src import Src
 
 
 @dataclass

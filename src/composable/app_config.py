@@ -12,7 +12,7 @@ from pydantic_settings import (
     YamlConfigSettingsSource,
 )
 
-from py_docker_compose.libs.schemas.src import Src
+from composable.libs.schemas.src import Src
 
 
 class AppConfig(BaseSettings):

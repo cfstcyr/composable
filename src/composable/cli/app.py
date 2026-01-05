@@ -11,10 +11,10 @@ import yaml
 from omegaconf import OmegaConf
 from rich.console import Console
 
-from py_docker_compose.app_config import load_app_config
-from py_docker_compose.app_state import AppState
-from py_docker_compose.libs.functions.load_compose import load_compose
-from py_docker_compose.libs.functions.load_data import load_data
+from composable.app_config import load_app_config
+from composable.app_state import AppState
+from composable.libs.functions.load_compose import load_compose
+from composable.libs.functions.load_data import load_data
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -27,10 +27,10 @@ def main(
     ctx: typer.Context,
     config_paths: list[Path] = typer.Option(
         [
-            Path("./pydc.yaml"),
-            Path("./pydc.yml"),
-            Path("./py-docker-compose.yaml"),
-            Path("./py-docker-compose.yml"),
+            Path("./composable.yaml"),
+            Path("./composable.yml"),
+            Path("./cpose.yaml"),
+            Path("./cpose.yml"),
         ],
         "--config",
         "-c",

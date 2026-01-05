@@ -11,7 +11,7 @@ from jinja2 import Environment
 from omegaconf import DictConfig, OmegaConf
 from pydantic import BaseModel, TypeAdapter
 
-from py_docker_compose.libs.schemas.src import Src
+from composable.libs.schemas.src import Src
 
 
 @dataclass(kw_only=True)

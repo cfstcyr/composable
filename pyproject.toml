@@ -1,5 +1,5 @@
 [project]
-name = "py-docker-compose"
+name = "composable"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -35,8 +35,8 @@ requires = ["uv_build>=0.9.17,<0.10.0"]
 build-backend = "uv_build"
 
 [project.scripts]
-pydc = "py_docker_compose:app"
-py-docker-compose = "py_docker_compose:app"
+composable = "composable:app"
+cpose = "composable:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]

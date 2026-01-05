@@ -1,8 +1,8 @@
-# py-docker-compose
+# composable
 
 Programmatically generate Docker Compose files using Python and Jinja2 templates.
 
-**py-docker-compose** lets you write modular, reusable Docker Compose configurations that are dynamically assembled at runtime. Instead of maintaining monolithic `docker-compose.yml` files, you can split your configuration into fragments, use templates with variables, and even define services using Python functions.
+**composable** lets you write modular, reusable Docker Compose configurations that are dynamically assembled at runtime. Instead of maintaining monolithic `docker-compose.yml` files, you can split your configuration into fragments, use templates with variables, and even define services using Python functions.
 
 ## Quick Start
 
@@ -12,7 +12,7 @@ Programmatically generate Docker Compose files using Python and Jinja2 templates
 pip install -e .
 ```
 
-2. Create a config file `pydc.yaml` (Optional, defaults shown):
+2. Create a config file `composable.yaml` (Optional, defaults shown):
 
 ```yaml
 src:
@@ -36,14 +36,14 @@ services:
 4. Run it:
 
 ```bash
-pydc compose -- up -d
+composable compose up -d
 ```
 
-That's it! py-docker-compose discovers all files in `./compose`, merges them, and runs `docker compose up -d` with the generated configuration.
+That's it! composable discovers all files in `./compose`, merges them, and runs `docker compose up -d` with the generated configuration.
 
 ## Installation
 
-py-docker-compose is not yet published to PyPI. Install it locally:
+composable is not yet published to PyPI. Install it locally:
 
 ```bash
 # Using pip
@@ -57,7 +57,7 @@ uv pip install -e .
 
 ### File Discovery & Merging
 
-py-docker-compose scans a source directory for compose fragments and merges them into a single Docker Compose configuration. Files are discovered using glob patterns and can be filtered by version or exclude patterns.
+composable scans a source directory for compose fragments and merges them into a single Docker Compose configuration. Files are discovered using glob patterns and can be filtered by version or exclude patterns.
 
 ```
 compose/
@@ -72,7 +72,7 @@ All discovered files are deep-merged in order. Later files override earlier ones
 
 ### Providers
 
-py-docker-compose supports two types of compose file providers:
+composable supports two types of compose file providers:
 
 **YAML/Jinja2 Provider** handles `.yml`, `.yaml`, `.yml.jinja`, and `.yaml.jinja` files. Jinja2 templates have access to all data variables and can include other templates. Jinja2 will be used regardless of the file extension.
 
@@ -82,7 +82,7 @@ py-docker-compose supports two types of compose file providers:
 
 Pass variables to your templates via:
 
-- The `data` section in `pydc.yaml`
+- The `data` section in `composable.yaml`
 - Data files (YAML/JSON) via `data_files`
 - CLI flags with `-d key=value`
 
@@ -90,7 +90,7 @@ Data is available in Jinja2 templates and passed as keyword arguments to Python 
 
 ## Configuration
 
-Create a `pydc.yaml` (or `pydc.yml`, `py-docker-compose.yaml`) in your project root:
+Create a `composable.yaml` (or `composable.yml`, `c.yaml`) in your project root:
 
 ```yaml
 # Source file configuration
@@ -119,8 +119,8 @@ data_files:
 
 | Command | Description |
 |---------|-------------|
-| `pydc compose -- <args>` | Generate compose file and run `docker compose <args>` |
-| `pydc output` | Output the generated compose file without running docker |
+| `composable compose <args>` | Generate compose file and run `docker compose <args>` |
+| `composable output` | Output the generated compose file without running docker |
 
 ### Common Options
 
@@ -136,22 +136,22 @@ data_files:
 
 ```bash
 # Start services in detached mode
-pydc compose up -d
+composable compose up -d
 
 # Pass data via CLI
-pydc compose up -d -d domain=example.com -d replicas=3
+composable compose up -d -d domain=example.com -d replicas=3
 
 # View generated compose file
-pydc output
+composable output
 
 # Output as JSON
-pydc output --format json
+composable output --format json
 
 # Dry run (show command without executing)
-pydc compose up -d --dry-run
+composable compose up -d --dry-run
 
 # Use a specific config file
-pydc compose -c production.yaml up -d
+composable compose -c production.yaml up -d
 ```
 
 ## Examples
@@ -194,7 +194,7 @@ services:
       - "traefik.http.routers.web.rule=Host(`{{ domain }}`)"
 ```
 
-With `pydc.yaml`:
+With `composable.yaml`:
 
 ```yaml
 src:
@@ -268,7 +268,7 @@ COMPOSE = {
 
 ### Version Selection
 
-py-docker-compose supports semantic versioning for compose files. Add a version suffix to filenames:
+composable supports semantic versioning for compose files. Add a version suffix to filenames:
 
 ```
 compose/
@@ -329,11 +329,11 @@ The resulting data will have `database.credentials.username` and `database.crede
 
 ### Programmatic Usage
 
-Use py-docker-compose as a library:
+Use composable as a library:
 
 ```python
-from py_docker_compose import load_compose
-from py_docker_compose.libs.schemas.src import Src
+from composable import load_compose
+from composable.libs.schemas.src import Src
 
 # Configure source
 src = Src(dir="./compose", glob="**/*.yml")
@@ -348,24 +348,13 @@ compose_model = load_compose(
 print(compose_model.model_dump())
 ```
 
-### Multiple Config Files
-
-Layer multiple config files for different environments:
-
-```bash
-# Base config + production overrides
-pydc compose -c pydc.yaml -c production.yaml up -d
-```
-
-Later config files override earlier ones.
-
 ## Project Structure Example
 
-A typical project using py-docker-compose:
+A typical project using composable:
 
 ```
 my-project/
-  pydc.yaml                 # Main configuration
+  composable.yaml            # Main configuration
   globals.yaml              # Shared data/variables
   compose/
     _partials/              # Reusable Jinja2 snippets (excluded)
@@ -395,8 +384,8 @@ Contributions are welcome! Here's how to get started:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/py-docker-compose.git
-cd py-docker-compose
+git clone https://github.com/yourusername/composable.git
+cd composable
 
 # Install with development dependencies
 uv sync --all-groups
