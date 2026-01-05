@@ -23,7 +23,7 @@ class ProviderContext:
 
 @dataclass(kw_only=True)
 class Provider(ABC):
-    extensions: ClassVar[ReadOnly[list[str]]] = []
+    extensions: ClassVar[ReadOnly[set[str]]] = set()
 
     @classmethod
     def file_match(cls, path: Path) -> bool:
@@ -37,12 +37,12 @@ class Provider(ABC):
 
 @dataclass
 class YamlFileProvider(Provider):
-    extensions: ClassVar[ReadOnly[list[str]]] = [
+    extensions: ClassVar[ReadOnly[set[str]]] = {
         ".yaml",
         ".yml",
         ".yaml.jinja",
         ".yml.jinja",
-    ]
+    }
     parse_fn: Callable[[str], dict[str, Any] | DictConfig] = field(
         default=lambda content: cast(DictConfig, OmegaConf.create(content))
     )
@@ -62,7 +62,7 @@ class YamlFileProvider(Provider):
 
 @dataclass
 class PythonFileProvider(Provider):
-    extensions: ClassVar[ReadOnly[list[str]]] = [".py"]
+    extensions: ClassVar[ReadOnly[set[str]]] = {".py"}
     symbols: list[str] = field(default_factory=lambda: ["compose", "COMPOSE"])
 
     def load(self, path: Path, context: ProviderContext) -> dict[str, Any] | DictConfig:
