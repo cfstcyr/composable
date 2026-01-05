@@ -6,10 +6,10 @@ Programmatically generate Docker Compose files using Python and Jinja2 templates
 
 ## Quick Start
 
-1. Install the package:
+1. Install composable:
 
 ```bash
-pip install -e .
+uv tool install https://github.com/cfstcyr/composable.git
 ```
 
 2. Create a config file `composable.yaml` (Optional, defaults shown):
@@ -17,10 +17,6 @@ pip install -e .
 ```yaml
 src:
   dir: ./compose
-  glob: "**/*.*"
-  exclude_patterns:
-    - "\/_"                     # Exclude files/dirs starting with underscore
-  version_spec: ">=0"           # Semver specifier for version selection
 ```
 
 3. Create a compose fragment `compose/web.yml`:
@@ -43,14 +39,26 @@ That's it! composable discovers all files in `./compose`, merges them, and runs 
 
 ## Installation
 
-composable is not yet published to PyPI. Install it locally:
+Install composable using uv (recommended):
 
 ```bash
-# Using pip
-pip install -e .
+uv tool install https://github.com/cfstcyr/composable.git
+```
 
-# Using uv
-uv pip install -e .
+### Alternatives
+
+If you don't have uv installed:
+
+**Using pip (direct from GitHub):**
+```bash
+pip install git+https://github.com/cfstcyr/composable.git
+```
+
+**Using pip (from source):**
+```bash
+git clone https://github.com/cfstcyr/composable.git
+cd composable
+pip install -e .
 ```
 
 ## Core Concepts
