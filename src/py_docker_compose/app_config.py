@@ -38,6 +38,8 @@ class AppConfig(BaseSettings):
     )
     data_files: list[Path] = Field(
         default=[
+            Path("data.yaml"),
+            Path("data.yml"),
             Path("globals.yaml"),
             Path("globals.yml"),
             Path("values.yaml"),
