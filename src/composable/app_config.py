@@ -18,8 +18,6 @@ from composable.libs.schemas.versions_spec import Versions
 
 class AppConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
         nested_model_default_partial_update=True,
     )
 
